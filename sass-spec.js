@@ -11,11 +11,11 @@ var assert = require('assert'),
     version = 3.4;
 
 var normalize = function(str) {
-  return str.replace(/\s+/g, '').replace('{', '{\n').replace(';', ';\n');
+  return str.replace(/\s+/g, '');
 };
 
 var specPath = join(__dirname, 'spec')
-var inputs = glob.sync(specPath + "/**/input.*");
+var inputs = glob.sync(specPath + '/**/input.*');
 
 var initialize = function(folder, options) {
   var testCase = {};
@@ -69,11 +69,11 @@ describe('spec', function() {
 
     it(test.folder, function(done) {
       if (test.todo || test.warningTodo) {
-        this.skip("Test marked with TODO");
+        this.skip('Test marked with TODO');
       } else if (version < test.startVersion) {
-        this.skip("Tests marked for newer Sass versions only");
+        this.skip('Tests marked for newer Sass versions only');
       } else if (version > test.endVersion) {
-        this.skip("Tests marked for older Sass versions only");
+        this.skip('Tests marked for older Sass versions only');
       } else {
         var expected = normalize(read(test.expectedPath, 'utf8'));
         sass.render({
@@ -90,14 +90,12 @@ describe('spec', function() {
               var expectedError = normalize(read(test.errorPath, 'utf8'))
                                     .replace(/Use\-\-traceforbacktrace\./, '');
               var actualError = normalize(error.formatted).replace(/^.*?(input.scss:\d+ DEBUG:)/, '\1')
-                   .replace(/\/+/, "/")
-                   .replace(/^#{Regexp.quote(url)}\//, "/sass/sass-spec/")
-                   .replace(/^#{Regexp.quote(spec_dir)}\//, "/sass/sass-spec/")
-                   .replace(/(?:\/todo_|_todo\/)/, "/")
-                   .replace(/\/libsass\-[a-z]+\-tests\//, "/")
-                   .replace(/\/libsass\-[a-z]+\-issues/, "/libsass-issues")
+                   .replace(/\/+/, '/')
+                   .replace(/spec\//, '/sass/spec/')
+                   .replace(/(?:\/todo_|_todo\/)/, '/')
+                   .replace(/\/libsass\-[a-z]+\-tests\//, '/')
+                   .replace(/\/libsass\-[a-z]+\-issues/, '/libsass-issues')
                    .replace(/\-*\^/,'')
-                   .replace(/ofspec\//, 'of/sass/spec/')
                    .replace(/input\.scss.*/, 'input.scss')
               assert.equal(actualError, expectedError, 'Should Error.\nOptions' + JSON.stringify(test.options))
             } else {
