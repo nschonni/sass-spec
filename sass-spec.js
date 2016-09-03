@@ -86,23 +86,20 @@ describe('spec', function() {
             if (test.shouldFail) {
               // Replace 1, with parseInt(read(test.statusPath, 'utf8')) penind https://github.com/sass/libsass/issues/2162
               assert.equal(error.status, 1);
-            }
-            if (test.verifyStderr) {
-              var expectedError = normalize(read(test.errorPath, 'utf8'))
-                                    .replace(/Use\-\-traceforbacktrace\./, '');
-              var actualError = normalize(error.formatted).replace(/^.*?(input.scss:\d+ DEBUG:)/, '\1')
-                   .replace(/\/+/, '/')
-                   .replace(/spec\//, '/sass/spec/')
-                   .replace(/(?:\/todo_|_todo\/)/, '/')
-                   .replace(/\/libsass\-[a-z]+\-tests\//, '/')
-                   .replace(/\/libsass\-[a-z]+\-issues/, '/libsass-issues')
-                   .replace(/\-*\^/,'')
-                   .replace(/input\.scss.*/, 'input.scss')
-              assert.equal(actualError, expectedError, 'Should Error.\nOptions' + JSON.stringify(test.options))
-            } else {
-              assert(!error, 'Shouldn\'t have an error with options ' + JSON.stringify(test.options))
-            }
-            if (expected) {
+            } else if (test.verifyStderr) {
+              var expectedError = read(test.errorPath, 'utf8');
+              if (error === null) {
+                assert.fail(error, expectedError, 'Expected error, but found none')
+              } else {
+                // The error messages seem to have some differences in areas
+                // like line numbering, so we'll check the first line for the
+                // general errror message only
+                assert.equal(
+                  error.formatted.toString().split("\n")[0],
+                  expectedError.toString().split("\n")[0],
+                  'Should Error.\nOptions' + JSON.stringify(test.options))
+              }
+            } else if (expected) {
               assert.equal(normalize(result.css.toString()), expected, 'Should equal with options ' + JSON.stringify(test.options));
             }
             done();
