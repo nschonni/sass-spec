@@ -8,6 +8,7 @@ var assert = require('assert'),
     readYaml = require('read-yaml'),
     objectMerge = require('object-merge'),
     glob = require('glob'),
+    impl = 'libsass',
     version = 3.4;
 
 var normalize = function(str) {
@@ -36,8 +37,8 @@ var initialize = function(folder, options) {
   ]
   testCase.precision = parseFloat(options[':precision']) || 5;
   testCase.outputStyle = options[':output_style'] ? options[':output_style'].replace(':', '') : 'nested';;
-  testCase.todo = options[':todo'] != null && options[':todo'].indexOf('libsass') != -1;
-  testCase.warningTodo = options[':warning_todo'] != null && options[':warning_todo'].indexOf('libsass') != -1;
+  testCase.todo = options[':todo'] != null && options[':todo'].indexOf(impl) != -1;
+  testCase.warningTodo = options[':warning_todo'] != null && options[':warning_todo'].indexOf(impl) != -1;
   testCase.startVersion = parseFloat(options[':start_version']) || 0;
   testCase.endVersion = parseFloat(options[':end_version']) || 99;
   testCase.options = options;
