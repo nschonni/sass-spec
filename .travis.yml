@@ -6,52 +6,62 @@ language: ruby
 branches:
   only: [master]
 
+stages:
+  - "3.4"
+  - "3.5"
+  - "4.0"
+
 env:
   global:
     - SASS_LIBSASS_PATH=$TRAVIS_BUILD_DIR/../libsass
     - SASS_SASSC_PATH=$TRAVIS_BUILD_DIR/../sassc
-    - SASS_SPEC_PATH=~$TRAVIS_BUILD_DIR/sass-spec
-
-matrix:
-  fast_finish: true
-  include:
-    - gemfile: Gemfile
-      env: LANGUAGE_VERSION=3.4 IMPL=ruby-sass
-    - gemfile: Gemfile.sass_3_5
-      env: LANGUAGE_VERSION=3.5 IMPL=ruby-sass
-    - gemfile: Gemfile.sass_4_0
-      env: LANGUAGE_VERSION=4.0 IMPL=ruby-sass
-    - env: LANGUAGE_VERSION=3.4 IMPL=libsass COMMAND="../sassc/bin/sassc" GITISH=3.4-stable
-    - env: LANGUAGE_VERSION=3.5 IMPL=libsass COMMAND="../sassc/bin/sassc" GITISH=master
-    - env: LANGUAGE_VERSION=4.0 IMPL=dart-sass
 
 before_install:
   - if ./tools/skipped-for-impl.sh; then exit 0; fi
-  - rm Gemfile.lock
 
-  - if [ $IMPL == "libsass" ]; then
-      git clone https://github.com/sass/libsass.git $SASS_LIBSASS_PATH;
-      (cd $SASS_LIBSASS_PATH; git checkout $GITISH);
-      git clone https://github.com/sass/sassc.git $SASS_SASSC_PATH;
-      (cd $SASS_SASSC_PATH; git checkout $GITISH);
-      make -C $SASS_SASSC_PATH;
-    fi
-
-  - if [ $IMPL == "dart-sass" ]; then
-      curl -o dart.zip "https://storage.googleapis.com/dart-archive/channels/stable/release/latest/sdk/dartsdk-linux-x64-release.zip";
-      unzip dart.zip;
-      export PATH="$PATH:`pwd`/dart-sdk/bin";
-
-      git clone https://github.com/sass/dart-sass.git ../dart-sass --depth 1;
-      (cd ../dart-sass; pub get);
-    fi
-
-script:
-  - if [ $IMPL == "ruby-sass" ]; then
-      bundle update sass;
-      bundle exec sass-spec.rb -V $LANGUAGE_VERSION --impl $IMPL;
-    elif [ $IMPL == "dart-sass" ]; then
-      bundle exec sass-spec.rb -V $LANGUAGE_VERSION --dart ../dart-sass;
-    else
-      bundle exec sass-spec.rb -V $LANGUAGE_VERSION --impl $IMPL -c $COMMAND;
-    fi
+jobs:
+  fast_finish: true
+  include:
+    - stage: "3.4"
+      env: IMPL=ruby-sass
+      install: bundle init && bundle add sass --version "< 3.5, > 3.4"
+      script: bundle exec sass-spec.rb -V 3.4 --impl $IMPL;
+    - stage: "3.5"
+      env: IMPL=ruby-sass
+      install: bundle init && bundle add sass --version "< 4.0, > 3.5"
+      script: bundle exec sass-spec.rb -V 3.5 --impl $IMPL;
+    - stage: "4.0"
+      env: IMPL=ruby-sass
+      install: bundle init && bundle add sass --version "< 5.0, > 4.0"
+      script: bundle exec sass-spec.rb -V 4.0 --impl $IMPL;
+    - stage: "3.4"
+      env:
+        - IMPL=libsass
+        - GITISH=3.4-stable
+      install:
+        - git clone https://github.com/sass/libsass.git $SASS_LIBSASS_PATH;
+        - (cd $SASS_LIBSASS_PATH; git checkout $GITISH);
+        - git clone https://github.com/sass/sassc.git $SASS_SASSC_PATH;
+        - (cd $SASS_SASSC_PATH; git checkout $GITISH);
+        - make -C $SASS_SASSC_PATH;
+      script: bundle exec sass-spec.rb -V 3.4 --impl $IMPL -c "../sassc/bin/sassc";
+    - stage: "3.5"
+      env:
+        - IMPL=libsass
+        - GITISH=master
+      install:
+        - git clone https://github.com/sass/libsass.git $SASS_LIBSASS_PATH;
+        - (cd $SASS_LIBSASS_PATH; git checkout $GITISH);
+        - git clone https://github.com/sass/sassc.git $SASS_SASSC_PATH;
+        - (cd $SASS_SASSC_PATH; git checkout $GITISH);
+        - make -C $SASS_SASSC_PATH;
+      script: bundle exec sass-spec.rb -V 3.5 --impl $IMPL -c "../sassc/bin/sassc";
+    - stage: "4.0"
+      env: IMPL=dart-sass
+      script: bundle exec sass-spec.rb -V $LANGUAGE_VERSION --dart ../dart-sass;
+      install:
+        - curl -o dart.zip "https://storage.googleapis.com/dart-archive/channels/stable/release/latest/sdk/dartsdk-linux-x64-release.zip";
+        - unzip dart.zip;
+        - export PATH="$PATH:`pwd`/dart-sdk/bin";
+        - git clone https://github.com/sass/dart-sass.git ../dart-sass --depth 1;
+        - (cd ../dart-sass; pub get);
